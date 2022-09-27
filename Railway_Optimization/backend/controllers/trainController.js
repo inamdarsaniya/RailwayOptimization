@@ -3,13 +3,24 @@ const Train=require("../models/trainModel")
 //variables
 var finalDirectTrain;
 
-const input_arr="juinagar";
-const input_dest="vashi";
+const harbour_stations=["CST","masjid","sandhurst","dockyard","reay","cotton","sewri","wadala","GTB","chunabhatti","kurla","tilak","chembur","govandi","mankhurd","vashi","sanpada","juinagar","nerul","seawoods","CBD","kharghar","mansarovar","khandeshwar","panvel"]
+const input_arr="panvel";
+const input_dest="juinagar";
+const arr_index=harbour_stations.indexOf(input_arr)
+const dest_index=harbour_stations.indexOf(input_dest)
+var down_the_line
+
+//to determine the way the train is going
+if (arr_index>dest_index){
+    down_the_line=true
+}else{
+    down_the_line=false
+}
+
 const inputTime={
     a:4,
     b:5
 }
-
 
 
 
@@ -34,17 +45,49 @@ const getTrain=async(req,res)=>{
     res.status(200).json(train)
 }
 
+//to get direct trains between source and dest
 const getDirectTrains=async(req,res)=>{
+    if (down_the_line==true){
+        var directTrains=await Train.find({$and:[{way:"down_the_line"},{"path.station":{$all:[input_arr,input_dest]}}]})
+    }else{
+        var directTrains=await Train.find({$and:[{way:"up_the_line"},{"path.station":{$all:[input_arr,input_dest]}}]})
+    }
+    
+    const list=time_at_station(directTrains,input_arr)
+    comparison=compare_time(list[0])
+    res.status(200).json(list)
+}
+
+
+
+//get time at a particular station
+function time_at_station(trains,station){
+    list=[]
     var tr_time;
-    var directTrains=await Train.find({"path.station":{$all:[input_arr,input_dest]}})
-    for (train of directTrains){
+    var trial_train
+    for (train of trains){
         for(ele of train.path){
-            if(ele.station==input_arr){
-                tr_time=ele
+            if(ele.station==station){
+                for (timing of ele.time){
+                    list[0]=timing
+                    list[1]=train
+                    return list
+                }
             }
         }
-     }
-    res.status(200).json(tr_time)
+    }
+}
+
+//for comparing timing with the inputed value
+function compare_time(time){
+    if(time.a>inputTime.a){
+        return true
+    }else if(time.a==inputTime.a&&time.b>=inputTime.b){
+        return true
+    }
+    else{
+        return false
+    }
 }
 
 
