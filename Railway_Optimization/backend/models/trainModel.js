@@ -25,6 +25,11 @@ const trainSchema=new Schema({
     type:{
         type:String,
         default:"harbour"
+    },
+    way:{
+        type:String,
+        default:"up_the_line",
+        required:true
     }
 })
 
