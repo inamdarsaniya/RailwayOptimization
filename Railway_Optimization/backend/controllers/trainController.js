@@ -4,8 +4,8 @@ const Train=require("../models/trainModel")
 var finalDirectTrain;
 
 const harbour_stations=["CST","masjid","sandhurst","dockyard","reay","cotton","sewri","wadala","GTB","chunabhatti","kurla","tilak","chembur","govandi","mankhurd","vashi","sanpada","juinagar","nerul","seawoods","CBD","kharghar","mansarovar","khandeshwar","panvel"]
-const input_arr="panvel";
-const input_dest="juinagar";
+const input_arr="juinagar";
+const input_dest="vashi";
 const arr_index=harbour_stations.indexOf(input_arr)
 const dest_index=harbour_stations.indexOf(input_dest)
 var down_the_line
@@ -53,10 +53,20 @@ const getDirectTrains=async(req,res)=>{
         var directTrains=await Train.find({$and:[{way:"up_the_line"},{"path.station":{$all:[input_arr,input_dest]}}]})
     }
     
-    const list=time_at_station(directTrains,input_arr)
-    comparison=compare_time(list[0])
-    res.status(200).json(list)
+    if(directTrains.length==0){
+        res.status(200).json({mssg:"No direct trains available"})
+        
+    }else{
+        const list=time_at_station(directTrains,input_arr)
+        comparison=compare_time(list[0])
+        res.status(200).json(list)
+    }
+
+    
 }
+
+
+//
 
 
 
