@@ -194,18 +194,11 @@ const getSwitchingTrains=async(req,res)=>{
         result1["c"]=trial.a;
         result1["d"]=trial.b;
         listing.push(result1)
-        
-
     }
     
     test=time_diff(listing)
-    res.status(200).json(listing)
     
-    
-
-
-
-
+    res.status(200).json(test)
     
 }
 
@@ -218,13 +211,10 @@ function time_diff (listing){
         source=lis.a*60+lis.b
         dest=lis.c*60+lis.d
         time=dest-source
-        hours=Math.floor(time/60)
-        mins=time%60
         listy={}
         listy["_id"]=lis._id
         listy["node"]=lis.node
-        listy["dhours"]=hours
-        listy["dmins"]=mins
+        listy["dtime"]=time
         listy["a"]=lis.a
         listy["b"]=lis.b
         listy["c"]=lis.c
