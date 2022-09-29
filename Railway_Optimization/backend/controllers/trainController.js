@@ -5,7 +5,7 @@ const Train=require("../models/trainModel")
 
 const nodes=["panvel","belapur","nerul","vashi","kurla","wadala","csmt"]
 const harbour_stations=["csmt","masjid","sandhurstroad","dockyardroad","reayroad","cottongreen","sewri","wadala","gtbnagar","chunabhatti","kurla","tilaknagar","chembur","govandi","mankhurd","vashi","sanpada","juinagar","nerul","seawoods","belapur","kharghar","mansarovar","khandeshwar","panvel"]
-const input_arr="juinagar";
+const input_arr="panvel";
 const input_dest="masjid";
 const arr_index=harbour_stations.indexOf(input_arr)
 const dest_index=harbour_stations.indexOf(input_dest)
@@ -80,15 +80,29 @@ function compare_list(list,time){
         b:60,
         _id:""
     }
+    first=parseInt(time.a)
+    second=parseInt(time.b)
 
     for (train of list){
-        if((train.a<list1.a)&&(train.a>=time.a)){
+        if((train.a<list1.a)&&(train.a>time.a)){
             list1.a=train.a;
             list1.b=train.b;
             list1._id=train._id
-
-        }else if((train.a=list1.a)&&(train.a>=time.a)){
-            if(((train.b<list1.b)&&(train.b>=time.b))){
+    
+        }else if((train.a==list1.a)&&(train.a>time.a)){
+            if(train.b<list1.b){
+                list1.a=train.a;
+                list1.b=train.b;
+                list1._id=train._id
+            }
+        }else if((train.a<list1.a)&&(train.a==time.a)){
+            if(train.b>time.b){
+                list1.a=train.a;
+                list1.b=train.b;
+                list1._id=train._id
+            }
+        }else if((train.a==list1.a)&&(train.a==time.a)){
+            if((train.b<list1.b)&&(train.b>time.b)){
                 list1.a=train.a;
                 list1.b=train.b;
                 list1._id=train._id
@@ -156,6 +170,7 @@ function nodes_down_the_line(){
 //for finding indirect trains between source and destination
 const getSwitchingTrains=async(req,res)=>{
     nodes_in_path=nodes_down_the_line()
+    var time_obj={}
     
     var listing=[]
     for(node of nodes_in_path){
@@ -167,24 +182,26 @@ const getSwitchingTrains=async(req,res)=>{
         result["c"]=trial.a;
         result["d"]=trial.b;
         listing.push(result)
+        time_obj["a"]=String(trial.a)
+        time_obj["b"]=String(trial.b)
         
-        var time_obj={}
-        time_obj["a"]=trial.a
-        time_obj["b"]=trial.b
 
         directTrains1=await Train.find({$and:[{way:"down_the_line"},{"path.station":{$all:[node,input_dest]}},{_id:{$ne:result._id}}]}).sort({start_time:1})
-        result=correct_direct_train(directTrains1,node,time_obj)
-        train=await Train.findById(result._id)
+        result1=correct_direct_train(directTrains1,node,time_obj)
+        train=await Train.findById(result1._id)
         trial=get_dest_time(train,input_dest)
-        result["node"]=node
-        result["e"]=trial.a;
-        result["f"]=trial.b;
-        listing.push(result)
+        result1["node"]=node
+        result1["c"]=trial.a;
+        result1["d"]=trial.b;
+        listing.push(result1)
+        
 
     }
     
-    
+    test=time_diff(listing)
     res.status(200).json(listing)
+    
+    
 
 
 
@@ -192,8 +209,37 @@ const getSwitchingTrains=async(req,res)=>{
     
 }
 
+//function to calculate time between source and dest
+function time_diff (listing){
+    track=[] 
+    listy={}
+    
+    for (lis of listing){
+        source=lis.a*60+lis.b
+        dest=lis.c*60+lis.d
+        time=dest-source
+        hours=Math.floor(time/60)
+        mins=time%60
+        listy={}
+        listy["_id"]=lis._id
+        listy["node"]=lis.node
+        listy["dhours"]=hours
+        listy["dmins"]=mins
+        listy["a"]=lis.a
+        listy["b"]=lis.b
+        listy["c"]=lis.c
+        listy["d"]=lis.d
+        
+        
+        track.push(listy) 
+    }
+    return track
+    
+}
 
-//removing unnecessary
+
+
+
 
 
 
