@@ -197,8 +197,12 @@ const getSwitchingTrains=async(req,res)=>{
     }
     
     test=time_diff(listing)
+    group=grouping(test)
+    correct_node=correctNode(group)
     
-    res.status(200).json(test)
+    
+    res.status(200).json(correct_node)
+
     
 }
 
@@ -226,6 +230,55 @@ function time_diff (listing){
     return track
     
 }
+
+//grouping of two similar nodes to form an array
+function grouping(test){
+    var temp=0
+    var lis=[]
+    unilist=[]
+    for (ele of test){
+        temp++
+        lis.push(ele)
+        if (temp%2==0){
+            unilist.push(lis)
+            lis=[]
+        }
+
+    }
+    return unilist
+}
+
+//function to calculate time between switching...waiting time
+function correctNode(groups){
+    switching_train=[]
+    wait=[]
+    test=1000
+    var total
+    for (ele of groups){
+        s1=(ele[0].c)*60+(ele[0].d)
+        s2=(ele[1].a)*60+(ele[1].b)
+        temp=s2-s1
+        
+        total=temp+ele[0].dtime+ele[1].dtime
+        wait.push(total)
+        wait.push(ele[0].node)
+    }
+    for(i=0;i<wait.length;i+=2){
+        if(wait[i]<test){
+            test=wait[i]
+        }
+    }
+    ind=wait.indexOf(test)
+    nod=wait[ind+1]
+    switching_train.push(test,nod)
+    for(ele of group){
+        if(ele[0].node==nod){
+            switching_train.push(ele[0],ele[1])
+        }
+    }
+    return switching_train
+}
+
 
 
 
