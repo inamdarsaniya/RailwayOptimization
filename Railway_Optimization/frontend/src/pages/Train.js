@@ -41,4 +41,4 @@ const Train=()=>{
         </div>
     )
 }
-export default Train
+export default Train 
