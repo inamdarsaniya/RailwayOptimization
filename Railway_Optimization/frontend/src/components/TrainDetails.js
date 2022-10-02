@@ -7,4 +7,4 @@ const TrainDetails=({pat})=>{
     </div>
  )
 }
-export default TrainDetails
+export default TrainDetails 
