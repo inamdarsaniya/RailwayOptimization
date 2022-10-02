@@ -402,7 +402,7 @@ function sendFrontendSwitching(result,train){
     }
     list.push(lis)
 
-
+    lis=[]
     for (ele of train[1].path){
         li["key"]=key
         key++
