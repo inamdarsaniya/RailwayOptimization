@@ -1,4 +1,6 @@
 const TrainsDetails=({pat})=>{
+
+
     return(
        <div className="train-details">
            <h4>Station: {pat.station}</h4>
