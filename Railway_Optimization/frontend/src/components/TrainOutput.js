@@ -55,4 +55,4 @@ const TrainOutput=()=>{
     </div>
     )
    }
-   export default TrainOutput
+   export default TrainOutput 
