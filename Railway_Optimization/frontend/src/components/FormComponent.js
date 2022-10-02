@@ -67,7 +67,9 @@ const FormComponent=()=>{
 
             />
 
-            <Link to="/train/"><button>Add Goal</button></Link>
+            <button >Submit Data</button>
+            <Link to="/train/"><button>View Direct Trains</button></Link>
+            <Link to="/train/switching"><button>View Switching Trains</button></Link>
             {error && <div className="error">{error}</div>}
         </form>
     )
