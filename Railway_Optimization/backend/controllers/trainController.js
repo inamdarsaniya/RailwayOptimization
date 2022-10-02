@@ -5,20 +5,26 @@ const Train=require("../models/trainModel")
 
 const nodes=["panvel","belapur","nerul","vashi","kurla","wadala","csmt"]
 const harbour_stations=["csmt","masjid","sandhurstroad","dockyardroad","reayroad","cottongreen","sewri","wadala","gtbnagar","chunabhatti","kurla","tilaknagar","chembur","govandi","mankhurd","vashi","sanpada","juinagar","nerul","seawoods","belapur","kharghar","mansarovar","khandeshwar","panvel"]
-const input_arr="panvel";
-const input_dest="masjid";
-const arr_index=harbour_stations.indexOf(input_arr)
-const dest_index=harbour_stations.indexOf(input_dest)
+var input_arr="panvel"
+var input_dest="csmt"
+arr_index=harbour_stations.indexOf(input_arr)
+dest_index=harbour_stations.indexOf(input_dest)
 var down_the_line
 
-//to determine the way the train is going
+arr_index=harbour_stations.indexOf(input_arr)
+dest_index=harbour_stations.indexOf(input_dest)
 if (arr_index>dest_index){
     down_the_line=true
+    toward="down_the_line"
+    
 }else{
     down_the_line=false
+    toward="up_the_line"
 }
 
-const inputTime={
+
+
+var inputTime={
     a:10,
     b:30
 }
@@ -45,31 +51,71 @@ const getTrain=async(req,res)=>{
     res.status(200).json(train)
 }
 
-//parsing through to find the accurate direct train
+
 
 
 
 //to get direct trains between source and dest
 const getDirectTrains=async(req,res)=>{
     list=[]
-    if (down_the_line==true){
-        var directTrains=await Train.find({$and:[{way:"down_the_line"},{"path.station":{$all:[input_arr,input_dest]}}]}).sort({start_time:1})
-    }else{
-        var directTrains=await Train.find({$and:[{way:"up_the_line"},{"path.station":{$all:[input_arr,input_dest]}}]}).sort({start_time:1})
-    }
     
+    var directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,input_dest]}}]}).sort({start_time:1})
     const result=correct_direct_train(directTrains,input_arr,inputTime)
     const train=await Train.findById(result._id)
     trial=get_dest_time(train,input_dest)
     if(trial.hasOwnProperty("a")){
         result["c"]=trial.a;
         result["d"]=trial.b;
+        result["src"]=input_arr;
+        result["dest"]=input_dest
     }
+    const train_info=await Train.findById(train._id)
+    const send_frontend=sendFrontend(result,train_info)
+
     
-    res.status(200).json(result)
+    res.status(200).json(send_frontend)
 }
 
+function sendFrontend(result,train){
+    
+    list=[]
+    lis=[]
+    li={}
+    key=0
+    
+    source_time=(result.a+" : "+result.b)
+    dest_time=(result.c+" : "+result.d)
+    s=result.a*60+result.b
+    d=result.c*60+result.d
+    t=d-s
+    hr=Math.floor(t/60)
+    mn=t%60
+    
+    list.push(result.src)
+    list.push(source_time)
+    list.push(result.dest)
+    list.push(dest_time)
+    list.push("Duration : "+hr+" hours "+mn+" mins ")
 
+    for (ele of train.path){
+        li["key"]=key
+        key++
+        li["station"]=ele.station
+        z=ele.time
+        for (v of z){
+            h= v.a
+            m= v.b
+        }
+        tme=h+" : "+m
+        li["time"]=tme
+        li["platform"]=ele.platform
+        lis.push(li)
+        li={}
+    }
+    list.push(lis)
+
+    return list
+}
 
 
 //comparing the list to find the most suitable train
@@ -152,9 +198,17 @@ function correct_direct_train(trains,station,time){
 //for determining the nodes between source and destination
 function nodes_down_the_line(){
     var nodes_in_path=[]
-    starting=harbour_stations.indexOf(input_arr)
-    ending=harbour_stations.indexOf(input_dest)
-    station=harbour_stations.slice(ending+1,starting).reverse()
+    var station
+    if (down_the_line){
+        starting=harbour_stations.indexOf(input_arr)
+        ending=harbour_stations.indexOf(input_dest)
+        station=harbour_stations.slice(ending+1,starting).reverse()
+    }else{
+        starting=harbour_stations.indexOf(input_arr)
+        ending=harbour_stations.indexOf(input_dest)
+        station=harbour_stations.slice(starting+1,ending)
+    }
+    
     
     for(ele of nodes){
         if(station.includes(ele)){
@@ -174,19 +228,20 @@ const getSwitchingTrains=async(req,res)=>{
     
     var listing=[]
     for(node of nodes_in_path){
-        var directTrains=await Train.find({$and:[{way:"down_the_line"},{"path.station":{$all:[input_arr,node]}}]}).sort({start_time:1})
+        var directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,node]}}]}).sort({start_time:1})
         result=correct_direct_train(directTrains,input_arr,inputTime)
         train=await Train.findById(result._id)
         trial=get_dest_time(train,node)
         result["node"]=node
         result["c"]=trial.a;
         result["d"]=trial.b;
+        
         listing.push(result)
         time_obj["a"]=String(trial.a)
         time_obj["b"]=String(trial.b)
         
 
-        directTrains1=await Train.find({$and:[{way:"down_the_line"},{"path.station":{$all:[node,input_dest]}},{_id:{$ne:result._id}}]}).sort({start_time:1})
+        directTrains1=await Train.find({$and:[{way:toward},{"path.station":{$all:[node,input_dest]}},{_id:{$ne:result._id}}]}).sort({start_time:1})
         result1=correct_direct_train(directTrains1,node,time_obj)
         train=await Train.findById(result1._id)
         trial=get_dest_time(train,input_dest)
@@ -194,15 +249,21 @@ const getSwitchingTrains=async(req,res)=>{
         result1["c"]=trial.a;
         result1["d"]=trial.b;
         listing.push(result1)
+        
+        
     }
     
     test=time_diff(listing)
     group=grouping(test)
     correct_node=correctNode(group)
     
+    little=[]
+    train_info=await Train.findById(correct_node[2]._id)
+    train_info1=await Train.findById(correct_node[3]._id)
+    little.push(train_info,train_info1)
+    re=sendFrontendSwitching(correct_node,little)
     
-    res.status(200).json(correct_node)
-
+    res.status(200).json(re)
     
 }
 
@@ -280,9 +341,87 @@ function correctNode(groups){
 }
 
 
+const postDirectTrains=async(req,res)=>{
+    const {source,dest,time}=req.body
+    arr=time.split(":")
+    inputTime.a=arr[0]
+    inputTime.b=arr[1]
+    input_arr=source
+    input_dest=dest
+    //to determine the way the train is going
+    arr_index=harbour_stations.indexOf(input_arr)
+    dest_index=harbour_stations.indexOf(input_dest)
+    if (arr_index>dest_index){
+        down_the_line=true
+        toward="down_the_line"
+        
+    }else{
+        down_the_line=false
+        toward="up_the_line"
+    }
+    res.status(200).json(toward)
+    
+}
 
 
+function sendFrontendSwitching(result,train){
+    
+    list=[]
+    lis=[]
+    li={}
+    key=0
+    
+    source_time=(result[2].a+" : "+result[2].b)
+    dest_time=(result[3].c+" : "+result[3].d)
+    hr=Math.floor(result[0]/60)
+    mn=result[0]%60
+    
+    list.push(input_arr)
+    list.push(source_time)
+    list.push(result[1])
+    list.push(input_dest)
+    list.push(dest_time)
+    
+    list.push("Duration : "+hr+" hours "+mn+" mins")
+    
 
+    for (ele of train[0].path){
+        li["key"]=key
+        key++
+        li["station"]=ele.station
+        z=ele.time
+        for (v of z){
+            h= v.a
+            m= v.b
+        }
+        tme=h+" : "+m
+        li["time"]=tme
+        li["platform"]=ele.platform
+        lis.push(li)
+        li={}
+    }
+    list.push(lis)
+
+
+    for (ele of train[1].path){
+        li["key"]=key
+        key++
+        li["station"]=ele.station
+        z=ele.time
+        for (v of z){
+            h= v.a
+            m= v.b
+        }
+        tme=h+" : "+m
+        li["time"]=tme
+        li["platform"]=ele.platform
+        lis.push(li)
+        li={}
+    }
+    list.push(lis)
+
+    return list
+}
 
 
 
@@ -290,5 +429,6 @@ module.exports={
     getTrain,
     getTrains,
     getDirectTrains,
-    getSwitchingTrains
+    getSwitchingTrains, 
+    postDirectTrains
 }
