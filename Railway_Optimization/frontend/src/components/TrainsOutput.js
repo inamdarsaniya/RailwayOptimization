@@ -55,13 +55,12 @@ const TrainsOutput=()=>{
         <strong>First Train : </strong>
         
         {path1 && path1.map((pat)=>(
-            <TrainsDetails key={pat.key} pat={pat}/>
-            
+            <TrainsDetails key={pat.key} pat={pat} />
         ))}
-        <strong>Second Train :</strong>
+        <strong>Second Train : </strong>
+        
         {path2 && path2.map((pat)=>(
-            <TrainsDetails key={pat.key} pat={pat}/>
-            
+            <TrainsDetails key={pat.key} pat={pat} />
         ))}
     </div>
     )
