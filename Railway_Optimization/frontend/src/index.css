@@ -1,0 +1,133 @@
+/*google font*/
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
+
+/*layout */
+:root{
+  --primary:#1aac83;
+  --error:#e7195a;
+}
+body{
+  background: #f1f1f1;
+  margin:0;
+  font-family: "Poppins";
+}
+header{
+  padding: 5px 10px 5px 65px;
+  background-color: rgb(255, 255, 255);
+
+}
+header.container{
+  max-width: 1400px;
+  margin: 10px auto;
+  padding:30px;
+  display:flex;
+  align-self: center;
+}
+header a{
+  color:#333;
+  text-decoration: none;
+  align-items: center;
+  align-self: center;
+}
+
+.pages{
+  max-width: 1400px;
+  padding:20px;
+  margin:0 auto;
+}
+
+
+/*homepage*/
+.home{
+  display:grid;
+  grid-template-columns: 1fr 3fr;
+  gap:100px;
+}
+
+.train-details {
+  background:#fff;
+  border-radius:4px;
+  margin:20px auto;
+  padding:20px;
+  position:relative;
+  box-shadow:2px 2px 5px rgba(0,0,0,0.5);
+}
+
+.ini{
+  
+  background:rgb(203, 203, 203);
+  border-radius:4px;
+  margin:20px auto;
+  padding:20px;
+  position:relative;
+  box-shadow:2px 2px 5px rgba(0,0,0,0.5);
+  
+}
+
+.train-details h4{
+  margin:0 0 10px 0;
+  font-size:0.9em;
+  color:var(--primary);
+}
+
+.train-details p{
+  margin:0;
+  font-size:0.9em;
+  color:#555;
+}
+
+.goal-details span{
+  position:absolute;
+  top:20px;
+  right:20px;
+  cursor:pointer;
+  background:#f1f1f1;
+  padding:6px;
+  border-radius:50%;
+  color:#333;
+}
+
+/*new workout form */
+label,input{
+  display:block;
+}
+input{
+  padding:10px;
+  margin-top:10px;
+  margin-bottom:20px;
+  width:100%;
+  border:1px solid #ddd;
+  border-radius:4px;
+  box-sizing:border-box;
+}
+
+form button{
+  background:var(--primary);
+  border:0;
+  color:#fff;
+  padding:10px;
+  font-family:"Poppins";
+  border-radius:4px;
+  cursor:pointer;
+}
+
+div.error{
+  padding:10px;
+  background:#ffefef;
+  border:1px solid var(--error);
+  color:var(--error);
+  border-radius:4px;
+  margin:20px 0;
+}
+
+input.error{
+  border:1px solid var(--error);
+}
+
+p.duepast{
+  color:var(--error);
+}
+p.duetoday{
+  color:var(--error);
+}
