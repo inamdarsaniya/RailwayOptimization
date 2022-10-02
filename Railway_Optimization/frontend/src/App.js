@@ -4,6 +4,7 @@ import {BrowserRouter,Routes,Route} from 'react-router-dom'
 import Home from "./pages/Home"
 import Navbar from './components/Navbar';
 import TrainOutput from './components/TrainOutput';
+import TrainsOutput from './components/TrainsOutput';
 
 function App() {
   return (
@@ -19,6 +20,10 @@ function App() {
         <Route
         path="/train"
         element={<TrainOutput/>}
+        />
+        <Route
+        path="/train/switching"
+        element={<TrainsOutput/>}
         />
 
       </Routes>
