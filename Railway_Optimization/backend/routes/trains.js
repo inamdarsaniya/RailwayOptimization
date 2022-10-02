@@ -17,6 +17,3 @@ router.get("/:id",getTrain)
 
 
 module.exports=router
-
-
-
