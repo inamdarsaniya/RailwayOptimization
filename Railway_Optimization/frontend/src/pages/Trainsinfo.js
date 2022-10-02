@@ -15,4 +15,4 @@ const Trainsinfo=()=>{
         </div>
     )
 }
-export default Home
+export default Home 
