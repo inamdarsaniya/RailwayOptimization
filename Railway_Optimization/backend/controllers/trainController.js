@@ -5,8 +5,8 @@ const Train=require("../models/trainModel")
 
 const nodes=["panvel","belapur","nerul","vashi","kurla","wadala","csmt"]
 const harbour_stations=["csmt","masjid","sandhurstroad","dockyardroad","reayroad","cottongreen","sewri","wadala","gtbnagar","chunabhatti","kurla","tilaknagar","chembur","govandi","mankhurd","vashi","sanpada","juinagar","nerul","seawoods","belapur","kharghar","mansarovar","khandeshwar","panvel"]
-var input_arr="panvel"
-var input_dest="csmt"
+var input_arr
+var input_dest
 arr_index=harbour_stations.indexOf(input_arr)
 dest_index=harbour_stations.indexOf(input_dest)
 var down_the_line
@@ -25,8 +25,8 @@ if (arr_index>dest_index){
 
 
 var inputTime={
-    a:10,
-    b:30
+    a:0,
+    b:0
 }
 
 
@@ -58,22 +58,28 @@ const getTrain=async(req,res)=>{
 //to get direct trains between source and dest
 const getDirectTrains=async(req,res)=>{
     list=[]
+    try{
+        var directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,input_dest]}}]}).sort({start_time:1})
+        const result=correct_direct_train(directTrains,input_arr,inputTime)
+        const train=await Train.findById(result._id)
+        trial=get_dest_time(train,input_dest)
+        if(trial.hasOwnProperty("a")){
+            result["c"]=trial.a;
+            result["d"]=trial.b;
+            result["src"]=input_arr;
+            result["dest"]=input_dest
+        }
+        const train_info=await Train.findById(train._id)
+        const send_frontend=sendFrontend(result,train_info)
     
-    var directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,input_dest]}}]}).sort({start_time:1})
-    const result=correct_direct_train(directTrains,input_arr,inputTime)
-    const train=await Train.findById(result._id)
-    trial=get_dest_time(train,input_dest)
-    if(trial.hasOwnProperty("a")){
-        result["c"]=trial.a;
-        result["d"]=trial.b;
-        result["src"]=input_arr;
-        result["dest"]=input_dest
-    }
-    const train_info=await Train.findById(train._id)
-    const send_frontend=sendFrontend(result,train_info)
+        
+        res.status(200).json(send_frontend)
+    }catch(err){
+        console.log(err)
+        res.status(200).json("no direct trains available")
 
+    }
     
-    res.status(200).json(send_frontend)
 }
 
 function sendFrontend(result,train){
@@ -225,45 +231,65 @@ function nodes_down_the_line(){
 const getSwitchingTrains=async(req,res)=>{
     nodes_in_path=nodes_down_the_line()
     var time_obj={}
-    
+    var directTrains
+    var directTrains1
     var listing=[]
     for(node of nodes_in_path){
-        var directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,node]}}]}).sort({start_time:1})
-        result=correct_direct_train(directTrains,input_arr,inputTime)
-        train=await Train.findById(result._id)
-        trial=get_dest_time(train,node)
-        result["node"]=node
-        result["c"]=trial.a;
-        result["d"]=trial.b;
-        
-        listing.push(result)
-        time_obj["a"]=String(trial.a)
-        time_obj["b"]=String(trial.b)
+        try{
+            directTrains=await Train.find({$and:[{way:toward},{"path.station":{$all:[input_arr,node]}}]}).sort({start_time:1})
+            result=correct_direct_train(directTrains,input_arr,inputTime)
+            train=await Train.findById(result._id)
+            trial=get_dest_time(train,node)
+            result["node"]=node
+            result["c"]=trial.a;
+            result["d"]=trial.b;
+            
+            listing.push(result)
+            time_obj["a"]=String(trial.a)
+            time_obj["b"]=String(trial.b)
+            
+
+        }catch(err){
+            listing.pop()
+            continue;
+        }
+        try{
+            directTrains1=await Train.find({$and:[{way:toward},{"path.station":{$all:[node,input_dest]}},{_id:{$ne:result._id}}]}).sort({start_time:1})
+            result1=correct_direct_train(directTrains1,node,time_obj)
+            train=await Train.findById(result1._id)
+            trial=get_dest_time(train,input_dest)
+            result1["node"]=node
+            result1["c"]=trial.a;
+            result1["d"]=trial.b;
+            listing.push(result1)
+
+        }catch(err){
+            listing.pop()
+            continue;
+        }
         
 
-        directTrains1=await Train.find({$and:[{way:toward},{"path.station":{$all:[node,input_dest]}},{_id:{$ne:result._id}}]}).sort({start_time:1})
-        result1=correct_direct_train(directTrains1,node,time_obj)
-        train=await Train.findById(result1._id)
-        trial=get_dest_time(train,input_dest)
-        result1["node"]=node
-        result1["c"]=trial.a;
-        result1["d"]=trial.b;
-        listing.push(result1)
+        
         
         
     }
+    console.log(listing)
+    if(listing.length!=0){
+        test=time_diff(listing)
+        group=grouping(test)
+        correct_node=correctNode(group)
+        
+        little=[]
+        train_info=await Train.findById(correct_node[2]._id)
+        train_info1=await Train.findById(correct_node[3]._id)
+        little.push(train_info,train_info1)
+        re=sendFrontendSwitching(correct_node,little)
+        
+        res.status(200).json(re)
+    }else{
+        res.status(200).json("no switching trains available")
+    }
     
-    test=time_diff(listing)
-    group=grouping(test)
-    correct_node=correctNode(group)
-    
-    little=[]
-    train_info=await Train.findById(correct_node[2]._id)
-    train_info1=await Train.findById(correct_node[3]._id)
-    little.push(train_info,train_info1)
-    re=sendFrontendSwitching(correct_node,little)
-    
-    res.status(200).json(re)
     
 }
 
